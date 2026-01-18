@@ -48,6 +48,8 @@ public class GameEngine {
         new PotManager().rebuildPots(room);
 
         initializePreflopBettingOrder(room);
+
+        notificationService.notifyRoom(room);
     }
 
     private void dealHoleCards(GameRoom room) {
@@ -107,7 +109,7 @@ public class GameEngine {
         room.setCurrentPlayerIndex(order.get(0));
     }
 
-    // 新增：驱动整个游戏直到结束
+    // 新增：驱动整个游戏直到结束,模拟用
     public void runCompleteHand(GameRoom room, int smallBlind, int bigBlind) {
         startNewHand(room, smallBlind, bigBlind);
         notificationService.notifyRoom(room);

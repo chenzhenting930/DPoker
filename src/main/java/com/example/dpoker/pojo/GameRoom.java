@@ -1,13 +1,18 @@
 package com.example.dpoker.pojo;
 
 import com.example.dpoker.Utils.DeckUtils;
+import com.example.dpoker.service.event.RoomEvent;
 import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 @Data
 public class GameRoom {
     private Integer roomId;
+    private String name; //房间名称
     /**
      * 按座位顺序
      */
@@ -23,6 +28,15 @@ public class GameRoom {
     private List<Integer> bettingOrder;         // 本轮下注顺序（玩家 index 列表）
     private boolean roundCompleted = false;     // 当前轮次是否结束（临时标志）
     private List<Pot> pots = new ArrayList<>();
+
+    //阻塞队列，用于接收用户操作
+    private final BlockingQueue<RoomEvent> queue = new LinkedBlockingQueue<>();
+    public boolean enqueue(RoomEvent event) {
+        return queue.offer(event);
+    }
+    public BlockingQueue<RoomEvent> getQueue() {
+        return queue;
+    }
 
     public void resetGameRoomForANewGame(){
         communityCards.clear();
@@ -73,4 +87,11 @@ public class GameRoom {
         }
         throw new IllegalStateException("Player index not found");
     }
+
+    public Player getCurrentPlayer(){
+        int currentPlayerIndex = getCurrentPlayerIndex();
+        return players.get(currentPlayerIndex);
+    }
+
+
 }

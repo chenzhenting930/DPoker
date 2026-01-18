@@ -1,3 +1,14 @@
 spring:
   application:
     name: DPoker
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/dpoker?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root  # 替换为你的MySQL用户名
+    password: 123456  # 替换为你的MySQL密码
+# MyBatisPlus 配置
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 打印SQL日志
+  type-aliases-package: com.example.dpoker.entity  # 实体类所在包名

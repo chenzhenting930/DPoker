@@ -44,7 +44,7 @@ public class Player {
     }
 
     /**
-     *   工具方法：是否存活（是否弃牌）
+     * 是否存活（是否弃牌）
      */
     public boolean isActive() {
         return !folded;

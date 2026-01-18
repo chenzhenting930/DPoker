@@ -11,6 +11,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 public class GameNotificationService {
@@ -22,11 +23,19 @@ public class GameNotificationService {
      * 向房间内所有玩家广播游戏状态更新
      */
     public void notifyRoom(GameRoom room) {
-        GameUpdateDto dto = buildGameUpdateDto(room);
-        messagingTemplate.convertAndSend("/topic/game/" + room.getRoomId(), dto);
+//        messagingTemplate.convertAndSend("/topic/game/" + room.getRoomId(), dto);
+        for (Player player:room.getPlayers()){
+            GameUpdateDto dto = buildGameUpdateDto(room,player);
+            messagingTemplate.convertAndSend("/topic/player/" + player.getUserId(), dto);
+        }
     }
 
-    private GameUpdateDto buildGameUpdateDto(GameRoom room) {
+    public void notifyPlayer(Integer playerId,String message){
+        messagingTemplate.convertAndSend("/topic/player/" + playerId, message);
+
+    }
+
+    private GameUpdateDto buildGameUpdateDto(GameRoom room,Player p) {
         GameUpdateDto dto = new GameUpdateDto();
         dto.setRoomId(room.getRoomId());
         dto.setCommunityCards(room.getCommunityCards().stream()
@@ -42,16 +51,19 @@ public class GameNotificationService {
                     return view;
                 })
                 .collect(Collectors.toList()));
+        dto.setCurrentPlayerId(room.getCurrentPlayer().getUserId());
 
         // 构建玩家视图（注意：holeCards 需按玩家隔离）
-        dto.setPlayers(room.getPlayers().stream()
-                .map(player -> toPlayerView(player, room))
-                .collect(Collectors.toList()));
+        dto.setPlayers(
+                IntStream.range(0, room.getPlayers().size())          // 0,1,2…
+                        .mapToObj(i -> toPlayerView(room.getPlayers().get(i), room, p,i)) // i 就是索引
+                        .collect(Collectors.toList())
+        );
 
         return dto;
     }
 
-    private PlayerView toPlayerView(Player player, GameRoom room) {
+    private PlayerView toPlayerView(Player player, GameRoom room,Player p,int index) {
         PlayerView view = new PlayerView();
         view.setUserId(player.getUserId());
         view.setChips(player.getChips());
@@ -59,11 +71,13 @@ public class GameNotificationService {
         view.setFolded(player.isFolded());
         view.setAllIn(player.isAllIn());
         view.setActive(player.isActive());
-        view.setCurrentPlayer(player.getUserId().equals(room.getPlayers().get(room.getCurrentPlayerIndex()).getUserId()));
+        view.setCurrentPlayer(player.getUserId().equals(room.getCurrentPlayer().getUserId()));
+        view.setIndex(index);
+        int buttonIndex = room.getButtonIndex();
+        view.setPosName(getPositionName(buttonIndex,index,room.getPlayers().size()));
 
-        // 安全：只有活跃玩家且是自己时才显示手牌（实际应在登录后按用户ID过滤）
-        // 这里简化：假设前端只渲染自己的牌
-        if (true) {
+
+        if (p.getUserId().equals(player.getUserId())) {
             view.setHoleCards(player.getHoleCards().stream()
                     .map(Card::toString)
                     .toArray(String[]::new));
@@ -72,5 +86,16 @@ public class GameNotificationService {
         }
 
         return view;
+    }
+
+    private String getPositionName(int buttonIndex,int index,int size){
+        if (buttonIndex == index){
+            return "庄家";
+        } else if ((buttonIndex+1)%size == index) {
+            return "小盲";
+        } else if ((buttonIndex+2)%size == index) {
+            return "大盲";
+        }
+        return "普通位置";
     }
 }
