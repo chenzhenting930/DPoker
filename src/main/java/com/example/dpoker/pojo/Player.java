@@ -30,9 +30,6 @@ public class Player {
     public void addToTotalBet(int amount) {
         this.totalBetInHand += amount;
     }
-    public void resetTotalBet() {
-        this.totalBetInHand = 0;
-    }
 
     public boolean hasMetCurrentBet(int currentBet) {
         return betThisRound >= currentBet || chips == 0; // 全下也算满足

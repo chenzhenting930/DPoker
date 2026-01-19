@@ -26,12 +26,16 @@ public class GameNotificationService {
 //        messagingTemplate.convertAndSend("/topic/game/" + room.getRoomId(), dto);
         for (Player player:room.getPlayers()){
             GameUpdateDto dto = buildGameUpdateDto(room,player);
-            messagingTemplate.convertAndSend("/topic/player/" + player.getUserId(), dto);
+            messagingTemplate.convertAndSendToUser(player.getUserId().toString(), "/queue", dto);
         }
     }
 
+    public void notifyAllInRoom(GameRoom room,String message) {
+        messagingTemplate.convertAndSend("/topic/game/" + room.getRoomId(), message);
+    }
+
     public void notifyPlayer(Integer playerId,String message){
-        messagingTemplate.convertAndSend("/topic/player/" + playerId, message);
+        messagingTemplate.convertAndSendToUser(playerId.toString(), "/queue", message);
 
     }
 
@@ -60,6 +64,8 @@ public class GameNotificationService {
                         .collect(Collectors.toList())
         );
 
+        dto.setGameEnded(room.isGameEnded());
+
         return dto;
     }
 
@@ -70,7 +76,6 @@ public class GameNotificationService {
         view.setTotalBetInHand(player.getTotalBetInHand());
         view.setFolded(player.isFolded());
         view.setAllIn(player.isAllIn());
-        view.setActive(player.isActive());
         view.setCurrentPlayer(player.getUserId().equals(room.getCurrentPlayer().getUserId()));
         view.setIndex(index);
         int buttonIndex = room.getButtonIndex();

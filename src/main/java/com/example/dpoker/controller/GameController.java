@@ -2,6 +2,7 @@ package com.example.dpoker.controller;
 
 import com.example.dpoker.dto.ActionRequest;
 import com.example.dpoker.dto.GameResponse;
+import com.example.dpoker.dto.Result;
 import com.example.dpoker.service.GameService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,7 @@ public class GameController {
 
     @MessageMapping("/game/{roomId}/action")
     @SendTo("/topic/game/{roomId}")
-    public GameResponse handlePlayerAction(
+    public Result handlePlayerAction(
             @DestinationVariable Integer roomId,
             @Payload ActionRequest request)  {
 
@@ -31,7 +32,7 @@ public class GameController {
 
     @MessageMapping("/game/{roomId}/gameStart")
     @SendTo("/topic/game/{roomId}")
-    public GameResponse startNewGame(
+    public Result startNewGame(
             @DestinationVariable Integer roomId,
             @Payload ActionRequest request) {
         System.out.println("GAME START -> roomId = " + roomId);
@@ -40,8 +41,8 @@ public class GameController {
     }
 
     @MessageMapping("/game/{roomId}/join")
-    @SendTo("/topic/game/{roomId}")
-    public GameResponse joinGameRoom(
+    @SendTo("/queue")
+    public Result joinGameRoom(
             @DestinationVariable Integer roomId,
             @Payload ActionRequest request) {
 
@@ -49,11 +50,26 @@ public class GameController {
     }
 
     @MessageMapping("/game/{roomId}/create")
-    public void createGameRoom(
+    @SendToUser("/queue")
+    public Result createGameRoom(
             @DestinationVariable Integer roomId,
             @Payload ActionRequest request) {
 
-        gameService.createGameRoom(roomId, request);
+        return gameService.createGameRoom(roomId, request);
+    }
+
+    @MessageMapping("/getGameRoomList")
+    @SendToUser("/queue")
+    public Result getGameRoomList() {
+        return gameService.getGameRoomList();
+    }
+
+    @MessageMapping("/game/{roomId}/leave")
+    @SendToUser("/queue")
+    public Result leaveGameRoom(
+            @DestinationVariable Integer roomId,
+            @Payload ActionRequest request){
+        return gameService.leaveGameRoom(roomId,request);
     }
 
 

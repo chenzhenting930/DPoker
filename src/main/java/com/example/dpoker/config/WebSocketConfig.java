@@ -20,28 +20,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")          // 前端连接地址：/ws
                 .setAllowedOriginPatterns("*") // 允许跨域（开发用，生产请限制）
-                .addInterceptors(new HandshakeInterceptor(){
-
-                    @Override
-                    public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
-                        // 在握手前获取token，并验证token是否有效
-                        String token = null;
-                        token = request.getHeaders().getFirst("token");
-                        Integer userId = LoginTokenManager.validateToken(token);
-                        if (token.isBlank() || userId == null) {
-                            // token无效，拒绝WebSocket连接
-                            response.setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
-                            return false;
-                        }
-                        attributes.put("userId", userId); // 将用户ID放入WebSocket会话属性中
-                        return true;
-                    }
-
-                    @Override
-                    public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Exception exception) {
-
-                    }
-                })
                 .withSockJS();               // 启用 SockJS 回退
     }
 

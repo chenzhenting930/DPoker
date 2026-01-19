@@ -3,6 +3,7 @@ package com.example.dpoker.service;
 import com.example.dpoker.Utils.BizThreadPool;
 import com.example.dpoker.dto.ActionRequest;
 import com.example.dpoker.dto.GameResponse;
+import com.example.dpoker.dto.Result;
 import com.example.dpoker.engine.BettingEngine;
 import com.example.dpoker.engine.GameEngine;
 import com.example.dpoker.engine.RoundManager;
@@ -31,44 +32,45 @@ public class GameService {
     private final BettingEngine bettingEngine;
     private final Map<Integer, GameRoom> rooms = new ConcurrentHashMap<>();
 
-    public GameResponse onPlayerAction(Integer roomId, ActionRequest action) {
+    public Result onPlayerAction(Integer roomId, ActionRequest action) {
         GameRoom room = rooms.get(roomId);
         if (room == null){
-            return GameResponse.builder().content("房间不存在！请先创建房间！").build();
+            return Result.fail("房间不存在");
         }
         room.enqueue(new PlayerActionEvent(action));
         BizThreadPool.execute(()->processOneEvent(room,action.getPlayerId()));
-        return GameResponse.builder().content("服务端收到操作："+action).action(action.getAction()).playerId(action.getPlayerId()).build();
+        return Result.success();
     }
 
-    public GameResponse startNewGame(Integer roomId, int smallBlind, int bigBlind) {
+    public Result startNewGame(Integer roomId, int smallBlind, int bigBlind) {
         GameRoom room = rooms.get(roomId);
         if (room == null){
-            return GameResponse.builder().content("房间不存在！").build();
+            return Result.fail("房间不存在！请先创建房间！");
         }
         gameEngine.startNewHand(room, smallBlind, bigBlind);
         log.info("游戏开始！");
-        return GameResponse.builder().content("游戏开始！").build();
+        return Result.success("游戏开始！");
     }
 
-    public GameResponse joinGameRoom(Integer roomId ,ActionRequest actionRequest){
+    public Result joinGameRoom(Integer roomId ,ActionRequest actionRequest){
         GameRoom room = rooms.get(roomId);
         if (room == null){
-            return GameResponse.builder().content("房间不存在！").build();
+            return Result.fail("房间不存在！请先创建房间！");
         }
 
         Player player = new Player(actionRequest.getPlayerId(), 10000);
         if (room.getPlayers().contains(player)){
-            return GameResponse.builder().content("玩家"+player.getUserId()+"已经在房间里了！").build();
+            return Result.fail("玩家已加入房间！");
         }
         room.getPlayers().add(player);
-        return GameResponse.builder().content("玩家"+player.getUserId()+"加入房间成功").state(1).build();
+        //通知房间用户
+        notificationService.notifyAllInRoom(room, "玩家"+actionRequest.getPlayerId()+"加入房间");
+        return Result.success("加入房间成功！");
     }
 
-    public void createGameRoom(Integer roomId ,ActionRequest actionRequest){
+    public Result createGameRoom(Integer roomId , ActionRequest actionRequest){
         if (rooms.containsKey(roomId)){
-            notificationService.notifyPlayer(actionRequest.getPlayerId(),"房间已存在！");
-            return;
+            return Result.fail("房间已存在！");
         }
         try {
             Player player = new Player(actionRequest.getPlayerId(), 10000);
@@ -76,9 +78,9 @@ public class GameService {
             playerList.add(player);
             GameRoom room = new GameRoom(roomId, playerList);
             rooms.put(roomId,room);
-            notificationService.notifyPlayer(actionRequest.getPlayerId(),"房间创建成功！");
+            return Result.success("房间创建成功！");
         } catch (Exception e) {
-            notificationService.notifyPlayer(actionRequest.getPlayerId(),"房间创建异常！error msg:"+e.getMessage());
+            return Result.fail("房间创建失败！"+e.getMessage());
         }
     }
 
@@ -104,4 +106,21 @@ public class GameService {
         }
     }
 
+    public Result getGameRoomList() {
+        if (rooms.isEmpty()){
+            return Result.fail("房间列表为空！");
+        }
+        return Result.success(rooms);
+    }
+
+    public Result leaveGameRoom(Integer roomId, ActionRequest request) {
+        try{
+            GameRoom room = rooms.get(roomId);
+            room.removePlayer(request.getPlayerId());
+            notificationService.notifyAllInRoom(room,"玩家"+request.getUserName()+"离开房间");
+            return Result.success("离开房间成功！");
+        } catch (Exception e) {
+            return Result.fail("离开房间失败！"+e.getMessage());
+        }
+    }
 }

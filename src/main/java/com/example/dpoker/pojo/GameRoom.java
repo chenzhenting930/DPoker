@@ -94,4 +94,7 @@ public class GameRoom {
     }
 
 
+    public void removePlayer(Integer playerId) {
+        players.removeIf(player -> player.getUserId().equals(playerId));
+    }
 }
