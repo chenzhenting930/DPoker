@@ -11,6 +11,8 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+import java.security.Principal;
+
 @Configuration
 public class StompAuthConfig implements WebSocketMessageBrokerConfigurer {
 
@@ -40,6 +42,12 @@ public class StompAuthConfig implements WebSocketMessageBrokerConfigurer {
 
                     // 绑定身份到 WS Session
                     accessor.getSessionAttributes().put("userId", userId);
+                    accessor.setUser(new Principal() {
+                        @Override
+                        public String getName() {
+                            return userId.toString();
+                        }
+                    });
                 }
 
                 return message;

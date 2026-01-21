@@ -16,6 +16,7 @@ public class ShowdownEngine{
             // 所有池归他
             int total = room.getTotalPotsAmount();
             awardPot(activePlayers.get(0), total);
+            room.setWinnerMap(Map.of(activePlayers.get(0),total));
         } else {
             Map<Player, HandRank> rankings = new HashMap<>();
             for (Player p : activePlayers) {

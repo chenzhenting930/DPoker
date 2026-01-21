@@ -57,14 +57,24 @@ public class PotManager {
                 .filter(Player::isActive)
                 .collect(Collectors.toSet());
 
+        HashMap<Player, Integer> winnerMap = new HashMap<>();
         for (Pot pot : room.getPots()) {
             // 找出能竞争此池的活跃玩家
             List<Player> contenders = activePlayers.stream()
                     .filter(p -> pot.getEligiblePlayerIds().contains(p.getUserId()))
                     .collect(Collectors.toList());
 
+            for (Player player:contenders){
+                if (!winnerMap.containsKey(player)){
+                    winnerMap.put(player,0);
+                }
+            }
+
             if (contenders.size() == 1) {
-                awardPot(contenders.get(0), pot.getAmount());
+                Player player = contenders.get(0);
+                awardPot(player, pot.getAmount());
+                Integer amount = winnerMap.get(player);
+                winnerMap.put(player,amount+pot.getAmount());
             } else {
                 // 评估这些玩家的手牌
                 Map<Player, HandRank> subRankings = new HashMap<>();
@@ -82,10 +92,18 @@ public class PotManager {
 
                 for (int i = 0; i < winners.size(); i++) {
                     int award = split + (i < remainder ? 1 : 0); // 处理余数
-                    awardPot(winners.get(i), award);
+                    Player player = winners.get(i);
+                    awardPot(player, award);
+                    Integer amount = winnerMap.get(player);
+                    winnerMap.put(player,amount+award);
                 }
             }
         }
+
+        Map<Player, Integer> map = winnerMap.entrySet().stream()
+                .filter(entry -> entry.getValue() > 0)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        room.setWinnerMap(map);
     }
 
     private void awardPot(Player player, int amount) {

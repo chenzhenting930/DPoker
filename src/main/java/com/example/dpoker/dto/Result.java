@@ -31,6 +31,14 @@ public class Result {
         return result;
     }
 
+    public static Result success(String msg,Object data) {
+        Result result = new Result();
+        result.setCode(200);
+        result.setMsg(msg);
+        result.setData(data);
+        return result;
+    }
+
     // 快速构建失败响应
     public static Result fail(String msg) {
         Result result = new Result();
@@ -40,10 +48,11 @@ public class Result {
     }
 
     // 快速构建自定义状态码的失败响应（如401未登录）
-    public static Result fail(int code, String msg) {
+    public static Result fail(int code, String msg,Object data) {
         Result result = new Result();
         result.setCode(code);
         result.setMsg(msg);
+        result.setData(data);
         return result;
     }
 }

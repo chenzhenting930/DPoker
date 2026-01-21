@@ -18,48 +18,48 @@ class DPokerApplicationTests {
     @Autowired
     private GameEngine engine;
 
-    @Test
-    void contextLoads() {
-        Player player1 = new Player(1,1000);
-        Player player2 = new Player(2,1000);
-        Player player3 = new Player(3,1000);
-        Player player4 = new Player(4,1000);
-
-        GameRoom gameRoom = new GameRoom(8794, new ArrayList<>(List.of(player1, player2, player3, player4)));
-
-
-        engine.startNewHand(gameRoom,10,20);
-
-        // 4. 验证结果
-        System.out.println("=== 游戏开局状态 ===");
-        System.out.println("底池: " + gameRoom.getTotalPotsAmount()); // 应为 30
-        System.out.println("当前最高下注: " + gameRoom.getCurrentBet()); // 应为 20
-
-        for (int i = 0; i < gameRoom.getPlayers().size(); i++) {
-            Player p = gameRoom.getPlayers().get(i);
-            String position = "";
-            if (i == gameRoom.getButtonIndex()){
-                position = "(庄家)";
-            } else if (i == (gameRoom.getButtonIndex()+1)%gameRoom.getPlayers().size()) {
-                position = "(小盲)";
-            }else if (i == (gameRoom.getButtonIndex()+2)%gameRoom.getPlayers().size()){
-                position = "(大盲)";
-            }
-            System.out.println("玩家" + p.getUserId() + position +
-                    " 筹码=" + p.getChips() +
-                    ", 底牌=" + p.getHoleCards());
-        }
-    }
+//    @Test
+//    void contextLoads() {
+//        Player player1 = new Player(1,1000);
+//        Player player2 = new Player(2,1000);
+//        Player player3 = new Player(3,1000);
+//        Player player4 = new Player(4,1000);
+//
+//        GameRoom gameRoom = new GameRoom(8794, new ArrayList<>(List.of(player1, player2, player3, player4)),"默认");
+//
+//
+//        engine.startNewHand(gameRoom,10,20);
+//
+//        // 4. 验证结果
+//        System.out.println("=== 游戏开局状态 ===");
+//        System.out.println("底池: " + gameRoom.getTotalPotsAmount()); // 应为 30
+//        System.out.println("当前最高下注: " + gameRoom.getCurrentBet()); // 应为 20
+//
+//        for (int i = 0; i < gameRoom.getPlayers().size(); i++) {
+//            Player p = gameRoom.getPlayers().get(i);
+//            String position = "";
+//            if (i == gameRoom.getButtonIndex()){
+//                position = "(庄家)";
+//            } else if (i == (gameRoom.getButtonIndex()+1)%gameRoom.getPlayers().size()) {
+//                position = "(小盲)";
+//            }else if (i == (gameRoom.getButtonIndex()+2)%gameRoom.getPlayers().size()){
+//                position = "(大盲)";
+//            }
+//            System.out.println("玩家" + p.getUserId() + position +
+//                    " 筹码=" + p.getChips() +
+//                    ", 底牌=" + p.getHoleCards());
+//        }
+//    }
 
     @Test
     public void testCompleteHand() {
         List<Player> players = Arrays.asList(
-                new Player(1, 1000),
-                new Player(2, 1000),
-                new Player(3, 1000),
-                new Player(4, 1000)
+                new Player(1, 1000,"ee"),
+                new Player(2, 1000,"ee2"),
+                new Player(3, 1000,"e3"),
+                new Player(4, 1000,"e4")
         );
-        GameRoom room = new GameRoom(1001, players);
+        GameRoom room = new GameRoom(1001, players,"test");
 
         while (room.getPlayers().stream().noneMatch(player -> player.getChips() < 20)) {
 

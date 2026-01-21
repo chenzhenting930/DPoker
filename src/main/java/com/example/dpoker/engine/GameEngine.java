@@ -23,6 +23,8 @@ public class GameEngine {
      * @param bigBlind 大盲注筹码数
       */
     public void startNewHand(GameRoom room, int smallBlind, int bigBlind) {
+        room.setGameStarted(true);
+        room.setGameEnded(false);
         // 1. 重置玩家状态（保留 chips，清空手牌和弃牌状态）
         for (Player p : room.getPlayers()) {
             p.setFolded(false);
@@ -30,6 +32,7 @@ public class GameEngine {
             p.setAllIn(false);
             p.setBetThisRound(0);
             p.setTotalBetInHand(0);
+            p.setReady(false);
         }
 
         // 2. 洗一副新牌

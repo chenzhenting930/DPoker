@@ -1,5 +1,6 @@
 package com.example.dpoker.pojo;
 
+import com.example.dpoker.dto.PlayerVO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,6 +15,9 @@ import java.util.List;
 @EqualsAndHashCode(of = "userId")
 public class Player {
     private Integer userId;
+    private String playerName;
+    private boolean ready; // 是否准备
+    private float point; // 用户积分
     /**
      * 当前筹码
      */
@@ -35,9 +39,10 @@ public class Player {
         return betThisRound >= currentBet || chips == 0; // 全下也算满足
     }
 
-    public Player(int userId, int chips) {
+    public Player(int userId, int chips,String playerName) {
         this.userId = userId;
         this.chips = chips;
+        this.playerName = playerName;
     }
 
     /**
@@ -45,5 +50,15 @@ public class Player {
      */
     public boolean isActive() {
         return !folded;
+    }
+
+    public PlayerVO toPlayerVO(){
+        return PlayerVO.builder()
+                .userId(userId)
+                .playerName(playerName)
+                .point(point)
+                .chips(chips)
+                .ready(ready)
+                .build();
     }
 }

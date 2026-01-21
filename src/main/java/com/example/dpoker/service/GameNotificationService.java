@@ -1,5 +1,6 @@
 package com.example.dpoker.service;
 
+import com.example.dpoker.dto.GameReport;
 import com.example.dpoker.dto.GameUpdateDto;
 import com.example.dpoker.dto.PlayerView;
 import com.example.dpoker.dto.PotView;
@@ -10,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -30,11 +33,11 @@ public class GameNotificationService {
         }
     }
 
-    public void notifyAllInRoom(GameRoom room,String message) {
+    public void notifyAllInRoom(GameRoom room,Object message) {
         messagingTemplate.convertAndSend("/topic/game/" + room.getRoomId(), message);
     }
 
-    public void notifyPlayer(Integer playerId,String message){
+    public void notifyPlayer(Integer playerId,Object message){
         messagingTemplate.convertAndSendToUser(playerId.toString(), "/queue", message);
 
     }
@@ -65,6 +68,8 @@ public class GameNotificationService {
         );
 
         dto.setGameEnded(room.isGameEnded());
+
+        dto.setGameReports(GameReport.generateGameReport(room));
 
         return dto;
     }

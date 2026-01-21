@@ -41,6 +41,7 @@ public class RoundManager{
             case 4 -> { // Showdown
                 new ShowdownEngine().distributePot(room);
                 room.setGameEnded(true);
+                room.setGameStarted(false);
                 return;
             }
             default -> throw new IllegalStateException("Invalid round: " + room.getRound());

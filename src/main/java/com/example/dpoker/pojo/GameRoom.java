@@ -1,13 +1,16 @@
 package com.example.dpoker.pojo;
 
 import com.example.dpoker.Utils.DeckUtils;
+import com.example.dpoker.dto.GameRoomVO;
 import com.example.dpoker.service.event.RoomEvent;
 import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 @Data
 public class GameRoom {
@@ -22,12 +25,17 @@ public class GameRoom {
     private int pot;                        // 当前底池
     private int currentBet;                 // 当前轮次最高下注额
     private int round;                      // 0=preflop, 1=flop,2=turn,3=river,4=showdown
-    private boolean gameEnded = false;
+    private boolean gameEnded = true;
+    private boolean gameStarted = false;
     private int buttonIndex;
     private int currentPlayerIndex = -1;        // 当前轮到谁行动（index）
     private List<Integer> bettingOrder;         // 本轮下注顺序（玩家 index 列表）
     private boolean roundCompleted = false;     // 当前轮次是否结束（临时标志）
     private List<Pot> pots = new ArrayList<>();
+    Integer[] blinds;
+    private List<Player> winners;
+    private List<Integer> winAmounts;
+    Map<Player,Integer> winnerMap;
 
     //阻塞队列，用于接收用户操作
     private final BlockingQueue<RoomEvent> queue = new LinkedBlockingQueue<>();
@@ -48,14 +56,14 @@ public class GameRoom {
         roundCompleted = false;
     }
 
-    public GameRoom(Integer roomId, List<Player> initialPlayers) {
+    public GameRoom(Integer roomId, List<Player> initialPlayers,String name) {
         this.roomId = roomId;
+        this.name = name;
         this.players = new ArrayList<>(initialPlayers); // 复制一份，避免外部修改
         this.communityCards = new ArrayList<>();
 //        this.pot = 0;
         this.currentBet = 0;
         this.round = 0;
-        this.gameEnded = false;
         this.buttonIndex = players.size()-1;//初始化为最后一个玩家
     }
 
@@ -90,11 +98,34 @@ public class GameRoom {
 
     public Player getCurrentPlayer(){
         int currentPlayerIndex = getCurrentPlayerIndex();
+        if (currentPlayerIndex == -1) {
+            return null;
+        }
         return players.get(currentPlayerIndex);
     }
 
 
     public void removePlayer(Integer playerId) {
         players.removeIf(player -> player.getUserId().equals(playerId));
+    }
+    public Player getPlayerById(Integer playerId) {
+        return players.stream()
+                .filter(player -> player.getUserId().equals(playerId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public boolean isAllPlayersReady() {
+        return players.stream().allMatch(Player::isReady);
+    }
+
+    public GameRoomVO toGameRoomVO(){
+        return GameRoomVO.builder()
+                .roomId(roomId)
+                .name(name)
+                .gameStarted(gameStarted)
+                .players(players.stream().map(Player::toPlayerVO).collect(Collectors.toList()))
+                .blinds(blinds)
+                .build();
     }
 }

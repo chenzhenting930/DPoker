@@ -3,8 +3,10 @@ package com.example.dpoker.controller;
 import com.example.dpoker.dto.ActionRequest;
 import com.example.dpoker.dto.GameResponse;
 import com.example.dpoker.dto.Result;
+import com.example.dpoker.service.GameNotificationService;
 import com.example.dpoker.service.GameService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -14,10 +16,13 @@ import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Slf4j
 public class GameController {
 
     @Autowired
     private GameService gameService;
+    @Autowired
+    private GameNotificationService gameNotificationService;
 
     @MessageMapping("/game/{roomId}/action")
     @SendTo("/topic/game/{roomId}")
@@ -30,18 +35,19 @@ public class GameController {
         return gameService.onPlayerAction(roomId, request);
     }
 
-    @MessageMapping("/game/{roomId}/gameStart")
+
+    @MessageMapping("/game/{roomId}/ready")
     @SendTo("/topic/game/{roomId}")
-    public Result startNewGame(
+    public Result ReadyForGame(
             @DestinationVariable Integer roomId,
             @Payload ActionRequest request) {
-        System.out.println("GAME START -> roomId = " + roomId);
 
-        return gameService.startNewGame(roomId, request.getSmallBlind(),request.getBigBlind());
+        log.info(request.getUserName()+" is ready for game");
+        return gameService.startNewGame(roomId,request);
     }
 
     @MessageMapping("/game/{roomId}/join")
-    @SendTo("/queue")
+    @SendToUser("/queue")
     public Result joinGameRoom(
             @DestinationVariable Integer roomId,
             @Payload ActionRequest request) {
@@ -63,6 +69,15 @@ public class GameController {
     public Result getGameRoomList() {
         return gameService.getGameRoomList();
     }
+
+    @MessageMapping("/game/{roomId}/getGameRoomInfo")
+    @SendToUser("/queue")
+    public Result getGameRoomInfo(
+            @DestinationVariable Integer roomId,
+            @Payload ActionRequest request) {
+        return gameService.getGameRoomInfo(roomId,request);
+    }
+
 
     @MessageMapping("/game/{roomId}/leave")
     @SendToUser("/queue")

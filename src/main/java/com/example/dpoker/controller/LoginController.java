@@ -9,11 +9,13 @@ import com.example.dpoker.dto.LoginRequest;
 import com.example.dpoker.dto.Result;
 import com.example.dpoker.entity.User;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,9 +25,12 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
+@Slf4j
 public class LoginController {
     @Autowired
     UserMapper userMapper;
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     @PostMapping("/login")
     public Result login(@RequestBody LoginRequest loginRequest){

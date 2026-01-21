@@ -2,108 +2,257 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>WebSocket 调试</title>
-
-    <!-- SockJS -->
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <!-- STOMP -->
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <title>WebSocket(STOMP) 调试工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .form-item {
+            margin-bottom: 10px;
+        }
+        label {
+            display: inline-block;
+            width: 80px;
+            font-weight: 500;
+        }
+        input {
+            padding: 8px 10px;
+            width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            background: #409eff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #66b1ff;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .log-area {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 10px;
+            overflow-y: auto;
+            background: #f8f8f8;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+        .error {
+            color: #f56c6c;
+        }
+        .success {
+            color: #67c23a;
+        }
+        .info {
+            color: #409eff;
+        }
+    </style>
 </head>
 <body>
-<h2>WebSocket 调试页面</h2>
+<div class="container">
+    <!-- 1. 登录区域：获取token -->
+    <div class="section">
+        <h3>1. 登录获取Token</h3>
+        <div class="form-item">
+            <label>用户名：</label>
+            <input type="text" id="username" placeholder="输入用户名" value="test">
+        </div>
+        <div class="form-item">
+            <label>密码：</label>
+            <input type="password" id="password" placeholder="输入密码" value="123456">
+        </div>
+        <button onclick="login()">登录</button>
+        <div class="form-item">
+            <label>Token：</label>
+            <input type="text" id="token" placeholder="登录后自动填充" readonly>
+        </div>
+    </div>
 
-<div>
-    <h3>1. 登录</h3>
-    <input id="username" placeholder="用户名">
-    <input id="password" placeholder="密码" type="password">
-    <button onclick="login()">登录</button>
+    <!-- 2. WebSocket连接区域 -->
+    <div class="section">
+        <h3>2. WebSocket连接</h3>
+        <div class="form-item">
+            <label>WS地址：</label>
+            <input type="text" id="wsUrl" value="http://localhost:8080/ws" placeholder="后端WS端点地址">
+        </div>
+        <button onclick="connectWs()" id="connectBtn">连接WS</button>
+        <button onclick="disconnectWs()" id="disconnectBtn" disabled>断开WS</button>
+    </div>
+
+    <!-- 3. 发送消息区域 -->
+    <div class="section">
+        <h3>3. 发送消息（触发convertAndSendToUser）</h3>
+        <button onclick="sendGetUserInfo()">发送 /app/getUserInfo</button>
+    </div>
+
+    <!-- 4. 日志区域 -->
+    <div class="section">
+        <h3>4. 调试日志（重点看是否收到"test"）</h3>
+        <div class="log-area" id="logArea"></div>
+    </div>
 </div>
 
-<hr>
-
-<div>
-    <h3>2. WebSocket</h3>
-    <button onclick="connect()">连接 WebSocket</button>
-    <button onclick="getUserInfo()">获取用户信息</button>
-</div>
-
-<hr>
-
-<h3>日志</h3>
-<pre id="log"></pre>
+<!-- 引入STOMP和SockJS依赖 -->
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
 
 <script>
-    let stompClient = null;
-    let token = null;
+    // 全局变量
+    let stompClient = null; // STOMP客户端实例
+    const logArea = document.getElementById('logArea');
 
-    function log(msg) {
-        document.getElementById("log").textContent += msg + "\n";
+    // 日志打印函数
+    function log(message, type = 'info') {
+        const time = new Date().toLocaleTimeString();
+        const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+        logArea.innerHTML += `[${time}] <span class="${className}">${message}</span>\n`;
+        // 自动滚动到底部
+        logArea.scrollTop = logArea.scrollHeight;
     }
 
-    // 1️⃣ 登录获取 token
-    function login() {
-        fetch("http://localhost:8080/login", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                username: document.getElementById("username").value,
-                password: document.getElementById("password").value
-            })
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (data.code === 200) {
-                    token = data.data;
-                    log("登录成功，token=" + token);
-                } else {
-                    log("登录失败：" + data.msg);
-                }
+    // 1. 登录获取token（适配新的响应格式：code=200、data存token）
+    async function login() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        if (!username || !password) {
+            log('用户名和密码不能为空！', 'error');
+            return;
+        }
+
+        try {
+            log('开始登录...');
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
             });
-    }
 
-    // 2️⃣ 连接 WebSocket
-    function connect() {
-        if (!token) {
-            alert("请先登录获取 token");
-            return;
-        }
-
-        const socket = new SockJS("http://localhost:8080/ws");
-        stompClient = Stomp.over(socket);
-
-        // 关闭 stomp 自带 debug
-        stompClient.debug = null;
-
-        stompClient.connect(
-            {
-                token: token   // ★★★ 握手 Header 中携带 token
-            },
-            frame => {
-                log("WebSocket 已连接");
-                log(frame);
-
-                // 订阅个人队列
-                stompClient.subscribe("/user/queue", message => {
-                    log("收到消息：");
-                    log(message.body);
-                });
-            },
-            error => {
-                log("WebSocket 连接失败");
-                log(error);
+            const result = await response.json();
+            // 适配你的响应格式：code=200表示成功，data字段是token
+            if (result.code === 200) {
+                const token = result.data;
+                document.getElementById('token').value = token;
+                log(`登录成功，Token：${token}`, 'success');
+            } else {
+                log(`登录失败：${result.msg || '未知错误'}`, 'error');
             }
-        );
+        } catch (error) {
+            log(`登录请求异常：${error.message}`, 'error');
+        }
     }
 
-    // 3️⃣ 发送消息
-    function getUserInfo() {
-        if (!stompClient || !stompClient.connected) {
-            alert("WebSocket 未连接");
+    // 2. 连接WebSocket（核心：携带token，订阅/user/queue）
+    function connectWs() {
+        const token = document.getElementById('token').value;
+        const wsUrl = document.getElementById('wsUrl').value;
+
+        if (!token) {
+            log('请先登录获取Token！', 'error');
             return;
         }
 
-        stompClient.send("/app/getUserInfo", {}, {});
-        log("已发送 /app/getUserInfo");
+        try {
+            log('开始连接WebSocket...');
+            // 创建SockJS实例（适配后端的withSockJS()）
+            const socket = new SockJS(wsUrl);
+            // 创建STOMP客户端
+            stompClient = StompJs.Stomp.over(socket);
+
+            // 配置连接参数（关键：携带token到CONNECT header）
+            stompClient.connect(
+                { token: token }, // 对应后端accessor.getFirstNativeHeader("token")
+                (frame) => { // 连接成功回调
+                    log(`WebSocket连接成功：${frame}`, 'success');
+                    // 禁用连接按钮，启用断开按钮
+                    document.getElementById('connectBtn').disabled = true;
+                    document.getElementById('disconnectBtn').disabled = false;
+
+                    // 核心：订阅/user/queue（接收convertAndSendToUser的消息）
+                    // 后端convertAndSendToUser的第二个参数是"/queue"，对应这里的/user/queue
+                    const subscription = stompClient.subscribe('/user/queue', (message) => {
+                        // 格式化显示收到的消息，方便查看是否包含"test"
+                        let msgContent = message.body;
+                        try {
+                            msgContent = JSON.stringify(JSON.parse(message.body), null, 2);
+                        } catch (e) {}
+                        log(`✅ 收到convertAndSendToUser消息：\n${msgContent}`, 'success');
+                    });
+
+                    log(`已订阅目的地：/user/queue（接收convertAndSendToUser消息）`, 'info');
+                },
+                (error) => { // 连接失败/断开回调
+                    log(`WebSocket连接失败/断开：${error.message || error}`, 'error');
+                    // 重置按钮状态
+                    document.getElementById('connectBtn').disabled = false;
+                    document.getElementById('disconnectBtn').disabled = true;
+                    stompClient = null;
+                }
+            );
+        } catch (error) {
+            log(`WebSocket连接异常：${error.message}`, 'error');
+        }
+    }
+
+    // 3. 断开WebSocket连接
+    function disconnectWs() {
+        if (stompClient && stompClient.connected) {
+            stompClient.disconnect(() => {
+                log('WebSocket已断开连接', 'info');
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = true;
+            });
+        } else {
+            log('当前无有效WebSocket连接', 'error');
+        }
+    }
+
+    // 4. 发送消息到/app/getUserInfo（触发后端执行convertAndSendToUser）
+    function sendGetUserInfo() {
+        if (!stompClient || !stompClient.connected) {
+            log('请先连接WebSocket！', 'error');
+            return;
+        }
+
+        try {
+            log('发送消息到 /app/getUserInfo（触发convertAndSendToUser）...');
+            // 发送空消息体（后端方法仅依赖StompHeaderAccessor）
+            stompClient.send('/app/getUserInfo', {}, '');
+            log('消息发送成功，等待后端返回/发送test消息...', 'info');
+        } catch (error) {
+            log(`发送消息失败：${error.message}`, 'error');
+        }
     }
 </script>
 </body>
