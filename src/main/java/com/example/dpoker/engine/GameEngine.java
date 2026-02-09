@@ -19,10 +19,8 @@ public class GameEngine {
     private final GameNotificationService notificationService;
     /**
      * 开始一局新游戏（发底牌 + 收盲注）
-     * @param smallBlind 小盲注筹码数
-     * @param bigBlind 大盲注筹码数
       */
-    public void startNewHand(GameRoom room, int smallBlind, int bigBlind) {
+    public void startNewHand(GameRoom room) {
         room.setGameStarted(true);
         room.setGameEnded(false);
         // 1. 重置玩家状态（保留 chips，清空手牌和弃牌状态）
@@ -42,6 +40,8 @@ public class GameEngine {
         dealHoleCards(room);
 
         // 4. 收取盲注（假设小盲在 index=0，大盲在 index=1）
+        Integer smallBlind = room.getBlinds()[0];
+        Integer bigBlind = room.getBlinds()[1];
         collectBlinds(room, smallBlind, bigBlind);
 
         // 5. 初始化轮次
@@ -114,7 +114,7 @@ public class GameEngine {
 
     // 新增：驱动整个游戏直到结束,模拟用
     public void runCompleteHand(GameRoom room, int smallBlind, int bigBlind) {
-        startNewHand(room, smallBlind, bigBlind);
+        startNewHand(room);
         notificationService.notifyRoom(room);
 
         while (!room.isGameEnded()) {

@@ -61,9 +61,18 @@ public class GameService {
             return Result.fail("玩家不存在！");
         }
         player.setReady(true);
+        int chips = player.getChips();
+        if (chips<1000){
+            player.setChips(chips+10000);
+            player.setPoint(player.getPoint()-10000);
+            User user = getUserById(player.getUserId());
+            float point = user.getPoint();
+            user.setPoint(point-10000);
+            userMapper.updateById(user);
+        }
         try {
             if (room.isAllPlayersReady()){
-                gameEngine.startNewHand(room, actionRequest.getSmallBlind(),actionRequest.getBigBlind());
+                gameEngine.startNewHand(room);
                 log.info("游戏开始！");
                 return Result.success("游戏开始！",room.toGameRoomVO());
             }
