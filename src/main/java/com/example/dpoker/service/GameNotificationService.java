@@ -33,6 +33,11 @@ public class GameNotificationService {
         }
     }
 
+    public void notifyRoomToPlayer(GameRoom room,Player player) {
+        GameUpdateDto dto = buildGameUpdateDto(room,player);
+        messagingTemplate.convertAndSendToUser(player.getUserId().toString(), "/queue", dto);
+    }
+
     public void notifyAllInRoom(GameRoom room,Object message) {
         messagingTemplate.convertAndSend("/topic/game/" + room.getRoomId(), message);
     }

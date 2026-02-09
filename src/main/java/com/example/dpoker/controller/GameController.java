@@ -46,6 +46,24 @@ public class GameController {
         return gameService.startNewGame(roomId,request);
     }
 
+    @MessageMapping("/game/{roomId}/globalSettlement")
+    @SendTo("/topic/game/{roomId}")
+    public Result globalSettlement(
+            @DestinationVariable Integer roomId,
+            @Payload ActionRequest request)  {
+
+        log.info("进行全局结算");
+
+        return gameService.globalSettlement(roomId, request);
+    }
+
+    @MessageMapping("/getPointRank")
+    @SendToUser("/queue")
+    public Result getPointRank()  {
+        log.info("获取积分榜排名");
+        return gameService.getPointRank();
+    }
+
     @MessageMapping("/game/{roomId}/join")
     @SendToUser("/queue")
     public Result joinGameRoom(
@@ -76,6 +94,14 @@ public class GameController {
             @DestinationVariable Integer roomId,
             @Payload ActionRequest request) {
         return gameService.getGameRoomInfo(roomId,request);
+    }
+
+    @MessageMapping("/game/{roomId}/getGameUpdate")
+    @SendToUser("/queue")
+    public Result getGameUpdate(
+            @DestinationVariable Integer roomId,
+            @Payload ActionRequest request) {
+        return gameService.getGameUpdate(roomId,request);
     }
 
 

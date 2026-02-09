@@ -1,11 +1,10 @@
 package com.example.dpoker.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.dpoker.Mapper.UserMapper;
 import com.example.dpoker.Utils.BizThreadPool;
 import com.example.dpoker.dto.ActionRequest;
-import com.example.dpoker.dto.GameResponse;
 import com.example.dpoker.dto.Result;
 import com.example.dpoker.engine.BettingEngine;
 import com.example.dpoker.engine.GameEngine;
@@ -18,17 +17,17 @@ import com.example.dpoker.service.event.RoomEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(rollbackFor = Exception.class)
 public class GameService {
     private final GameEngine gameEngine;
     private final GameNotificationService notificationService;
@@ -101,7 +100,9 @@ public class GameService {
         player.setPoint(user.getPoint());
         player.setReady(false);
         if (room.getPlayers().contains(player)){
-            return Result.fail(0,"玩家已加入房间！",room);
+            return Result.fail(2,"玩家已加入房间！",room.toGameRoomVO());
+        } else if (room.isGameStarted()) {
+            return Result.fail(3,"游戏已开始，请观战！",room.toGameRoomVO());
         }
         room.getPlayers().add(player);
         //通知房间用户
@@ -190,6 +191,16 @@ public class GameService {
         return Result.success(room.toGameRoomVO());
     }
 
+    public Result getGameUpdate(Integer roomId, ActionRequest request) {
+        GameRoom room = rooms.get(roomId);
+        if (room == null){
+            return Result.fail("房间不存在！请先创建房间！");
+        }
+        Player player = room.getPlayerById(request.getPlayerId());
+        notificationService.notifyRoomToPlayer(room,player);
+        return Result.success("成功获取游戏状态！");
+    }
+
     private User getUserById(Integer userId){
         return userMapper.selectOne(new LambdaQueryWrapper<>(User.class).eq(User::getId, userId));
     }
@@ -202,5 +213,38 @@ public class GameService {
         user.setPoint(point);
         log.info("玩家"+user.getUsername()+"原积分："+point1+" 转换后："+point+",筹码-10000 = "+chips);
         return user;
+    }
+
+
+    public Result globalSettlement(Integer roomId, ActionRequest request) {
+        try{
+            GameRoom room = rooms.get(roomId);
+            if (room == null){
+                return Result.fail("房间不存在！");
+            }
+
+            List<Player> players = room.getPlayers();
+            for (Player player : players) {
+                User user = getUserById(player.getUserId());
+                User user1 = settlementToPoint(user, player);
+                userMapper.updateById(user1);
+                player.setChips(10000);
+            }
+        } catch (Exception e) {
+            log.error("全局结算异常",e);
+            return Result.fail("全局结算失败！");
+        }
+        return Result.success("全局结算完成！");
+    }
+
+    public Result getPointRank() {
+        List<User> list = userMapper.selectList(
+                new QueryWrapper<User>()
+                        .select("username", "point")      // 1. 先指定查询字段
+                        .eq("test", 0)                    // 2. 条件
+                        .orderByDesc("point")             // 3. 排序（降序）
+        );
+
+        return Result.success("获取排行榜成功",list);
     }
 }
