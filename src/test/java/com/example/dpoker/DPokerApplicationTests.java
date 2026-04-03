@@ -75,4 +75,14 @@ class DPokerApplicationTests {
         }
     }
 
+    @Test
+    public void show() {
+        int n = 20;
+        while (n>0) {
+            List<Card> shuffledDeck = DeckUtils.createShuffledDeck();
+            System.out.println(shuffledDeck +  "\n");
+            n--;
+        }
+    }
+
 }

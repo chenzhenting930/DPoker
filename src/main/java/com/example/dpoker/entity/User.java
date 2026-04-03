@@ -19,4 +19,5 @@ public class User {
     private String password;     // 密码
     private float point; // 用户积分
     private LocalDateTime createTime; // 创建时间
+    private String nickname;
 }

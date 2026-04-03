@@ -69,8 +69,10 @@ public class BettingEngine {
         player.setBetThisRound(raiseTo);
         player.setChips(player.getChips()-additional);
         player.addToTotalBet(additional);
-//        room.setPot(room.getPot()+additional);
-        room.setCurrentBet(raiseTo);
+        if(room.getCurrentBet() < raiseTo){
+            room.setCurrentBet(raiseTo);
+        }
+
 
         room.setBettingOrder(buildNewBettingOrderAfterRaise(room, player));
     }

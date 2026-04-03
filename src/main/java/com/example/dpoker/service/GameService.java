@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.dpoker.Mapper.UserMapper;
 import com.example.dpoker.Utils.BizThreadPool;
 import com.example.dpoker.dto.ActionRequest;
+import com.example.dpoker.dto.GameRoomVO;
 import com.example.dpoker.dto.Result;
 import com.example.dpoker.engine.BettingEngine;
 import com.example.dpoker.engine.GameEngine;
@@ -44,9 +45,13 @@ public class GameService {
         room.enqueue(new PlayerActionEvent(action));
         BizThreadPool.execute(()->processOneEvent(room,action.getPlayerId()));
         if (action.getAction().equals("raise")){
+            Player player = room.getPlayerById(action.getPlayerId());
+            if (player.getChips()<action.getAmount()){
+                action.setAmount(player.getChips());
+            }
             return Result.success(action.getUserName()+"进行了"+action.getAction()+" 金额："+action.getAmount());
         }
-        return Result.success(action.getUserName()+"进行了"+action.getAction());
+        return Result.success(207,action.getUserName()+"进行了"+action.getAction());
     }
 
     public Result startNewGame(Integer roomId,ActionRequest actionRequest) {
@@ -70,7 +75,7 @@ public class GameService {
             userMapper.updateById(user);
         }
         try {
-            if (room.isAllPlayersReady()){
+            if (room.isAllPlayersReady() && room.getPlayers().size()>=3){
                 gameEngine.startNewHand(room);
                 log.info("游戏开始！");
                 return Result.success("游戏开始！",room.toGameRoomVO());
@@ -80,7 +85,7 @@ public class GameService {
         }
 
 
-        return Result.success("等待其他玩家准备",room.toGameRoomVO());
+        return Result.success(player.getPlayerName()+"已准备，等待其他玩家准备",room.toGameRoomVO());
 
 
     }
@@ -163,12 +168,17 @@ public class GameService {
         if (rooms.isEmpty()){
             return Result.fail("房间列表为空！");
         }
-        return Result.success(rooms);
+        List<GameRoomVO> roomVOS = rooms.values().stream().map(GameRoom::toGameRoomVO).toList();
+        return Result.success(roomVOS);
     }
 
     public Result leaveGameRoom(Integer roomId, ActionRequest request) {
         try{
             GameRoom room = rooms.get(roomId);
+            //游戏若已开始，不允许退出房间
+            if (room.isGameStarted() && !room.isGameEnded()){
+                return Result.fail("游戏已开始，不允许离开房间！");
+            }
             User user = getUserById(request.getPlayerId());
             Player player = room.getPlayerById(request.getPlayerId());
             User user1 = settlementToPoint(user, player);
@@ -222,6 +232,9 @@ public class GameService {
             if (room == null){
                 return Result.fail("房间不存在！");
             }
+            if (room.isGameStarted()){
+                return Result.fail("游戏已经开始，请结束后进行结算！");
+            }
 
             List<Player> players = room.getPlayers();
             for (Player player : players) {
@@ -229,6 +242,7 @@ public class GameService {
                 User user1 = settlementToPoint(user, player);
                 userMapper.updateById(user1);
                 player.setChips(10000);
+                player.setPoint(user1.getPoint());
             }
         } catch (Exception e) {
             log.error("全局结算异常",e);
@@ -240,11 +254,10 @@ public class GameService {
     public Result getPointRank() {
         List<User> list = userMapper.selectList(
                 new QueryWrapper<User>()
-                        .select("username", "point")      // 1. 先指定查询字段
+                        .select("nickname", "point")      // 1. 先指定查询字段
                         .eq("test", 0)                    // 2. 条件
                         .orderByDesc("point")             // 3. 排序（降序）
         );
-
         return Result.success("获取排行榜成功",list);
     }
 }

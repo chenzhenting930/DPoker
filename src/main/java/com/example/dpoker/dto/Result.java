@@ -31,6 +31,14 @@ public class Result {
         return result;
     }
 
+    public static Result success(int code,Object data) {
+        Result result = new Result();
+        result.setCode(code);
+        result.setMsg("操作成功");
+        result.setData(data);
+        return result;
+    }
+
     public static Result success(String msg,Object data) {
         Result result = new Result();
         result.setCode(200);

@@ -63,7 +63,9 @@ public class GameNotificationService {
                     return view;
                 })
                 .collect(Collectors.toList()));
-        dto.setCurrentPlayerId(room.getCurrentPlayer().getUserId());
+        if (room.getCurrentPlayer() != null){
+            dto.setCurrentPlayerId(room.getCurrentPlayer().getUserId());
+        }
 
         // 构建玩家视图（注意：holeCards 需按玩家隔离）
         dto.setPlayers(
