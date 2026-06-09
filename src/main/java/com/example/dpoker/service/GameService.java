@@ -46,8 +46,8 @@ public class GameService {
         BizThreadPool.execute(()->processOneEvent(room,action.getPlayerId()));
         if (action.getAction().equals("raise")){
             Player player = room.getPlayerById(action.getPlayerId());
-            if (player.getChips()<action.getAmount()){
-                action.setAmount(player.getChips());
+            if (player.getChips() + player.getBetThisRound()<action.getAmount()){
+                action.setAmount(player.getChips()+ player.getBetThisRound());
             }
             return Result.success(action.getUserName()+"进行了"+action.getAction()+" 金额："+action.getAmount());
         }
@@ -64,7 +64,7 @@ public class GameService {
         if (player == null){
             return Result.fail("玩家不存在！");
         }
-        player.setReady(true);
+
         int chips = player.getChips();
         if (chips<1000){
             player.setChips(chips+10000);
@@ -75,6 +75,7 @@ public class GameService {
             userMapper.updateById(user);
         }
         try {
+            player.setReady(true);
             if (room.isAllPlayersReady() && room.getPlayers().size()>=3){
                 gameEngine.startNewHand(room);
                 log.info("游戏开始！");

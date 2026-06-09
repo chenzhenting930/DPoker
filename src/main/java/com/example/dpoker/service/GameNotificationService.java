@@ -84,6 +84,7 @@ public class GameNotificationService {
     private PlayerView toPlayerView(Player player, GameRoom room,Player p,int index) {
         PlayerView view = new PlayerView();
         view.setUserId(player.getUserId());
+        view.setNickname(player.getPlayerName()); // 透传昵称给前端
         view.setChips(player.getChips());
         view.setTotalBetInHand(player.getTotalBetInHand());
         view.setFolded(player.isFolded());

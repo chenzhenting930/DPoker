@@ -7,7 +7,9 @@ public class Card {
     Suit suit;
     Rank rank;
     public enum Suit{
-        HEARTS('❤'), DIAMONDS('♦'),
+        // 统一使用 U+266X 系列标准扑克花色（♠♥♦♣），不要用 U+2764 ❤（emoji 风格）
+        // 否则前端 SUIT_CHARS（['♠','♥','♦','♣']）匹配不到
+        HEARTS('♥'), DIAMONDS('♦'),
         CLUBS('♣'), SPADES('♠');
 
         private final char symbol;

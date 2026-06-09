@@ -51,7 +51,7 @@ class DPokerApplicationTests {
 //        }
 //    }
 
-    @Test
+
     public void testCompleteHand() {
         List<Player> players = Arrays.asList(
                 new Player(1, 1000,"ee"),

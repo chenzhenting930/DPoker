@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 public class PlayerView {
     private Integer userId;
+    private String nickname; // 玩家昵称（从 Player.playerName 透传）
     private int chips;
     private int totalBetInHand;
     private boolean folded;

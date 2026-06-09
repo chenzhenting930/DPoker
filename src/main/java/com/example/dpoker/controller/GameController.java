@@ -1,6 +1,7 @@
 package com.example.dpoker.controller;
 
 import com.example.dpoker.dto.ActionRequest;
+import com.example.dpoker.dto.ChatMessage;
 import com.example.dpoker.dto.GameResponse;
 import com.example.dpoker.dto.Result;
 import com.example.dpoker.service.GameNotificationService;
@@ -44,6 +45,21 @@ public class GameController {
 
         log.info(request.getUserName()+" is ready for game");
         return gameService.startNewGame(roomId,request);
+    }
+
+    /**
+     * 房间聊天消息处理
+     * ---------------------------------------------------------------------------
+     * 接收玩家发送的聊天文字，原样广播给房间内所有玩家。
+     * 不包装 Result，直接用 ChatMessage 类型让前端通过 type="chat" 识别。
+     */
+    @MessageMapping("/game/{roomId}/chat")
+    @SendTo("/topic/game/{roomId}")
+    public ChatMessage handleChatMessage(
+            @DestinationVariable Integer roomId,
+            @Payload ChatMessage message) {
+        log.info("[房间{}] {}: {}", roomId, message.getUserName(), message.getText());
+        return message;
     }
 
     @MessageMapping("/game/{roomId}/globalSettlement")
