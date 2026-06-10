@@ -75,25 +75,81 @@
         .info {
             color: #409eff;
         }
+        /* 登录/注册标签切换栏样式 */
+        .tab-bar {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .tab-btn {
+            padding: 8px 24px;
+            margin-right: 0;
+            background: transparent;
+            color: #666;
+            border: none;
+            border-bottom: 2px solid transparent;
+            border-radius: 0;
+            cursor: pointer;
+            font-size: 15px;
+            margin-bottom: -2px;
+        }
+        .tab-btn:hover {
+            background: transparent;
+            color: #409eff;
+        }
+        .tab-btn.active {
+            color: #409eff;
+            border-bottom-color: #409eff;
+            background: transparent;
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <!-- 1. 登录区域：获取token -->
     <div class="section">
-        <h3>1. 登录获取Token</h3>
-        <div class="form-item">
-            <label>用户名：</label>
-            <input type="text" id="username" placeholder="输入用户名" value="test">
+        <h3>1. 登录 / 注册</h3>
+        <!-- 登录/注册切换标签 -->
+        <div class="tab-bar">
+            <button id="tabLogin" class="tab-btn active" onclick="switchTab('login')">登录</button>
+            <button id="tabRegister" class="tab-btn" onclick="switchTab('register')">注册</button>
         </div>
-        <div class="form-item">
-            <label>密码：</label>
-            <input type="password" id="password" placeholder="输入密码" value="123456">
+        <!-- 登录表单 -->
+        <div id="loginForm">
+            <div class="form-item">
+                <label>用户名：</label>
+                <input type="text" id="loginUsername" placeholder="输入用户名" value="test">
+            </div>
+            <div class="form-item">
+                <label>密码：</label>
+                <input type="password" id="loginPassword" placeholder="输入密码" value="123456">
+            </div>
+            <button onclick="login()">登录</button>
         </div>
-        <button onclick="login()">登录</button>
-        <div class="form-item">
+        <!-- 注册表单（默认隐藏） -->
+        <div id="registerForm" style="display:none;">
+            <div class="form-item">
+                <label>用户名：</label>
+                <input type="text" id="regUsername" placeholder="输入用户名">
+            </div>
+            <div class="form-item">
+                <label>密码：</label>
+                <input type="password" id="regPassword" placeholder="输入密码">
+            </div>
+            <div class="form-item">
+                <label>昵称：</label>
+                <input type="text" id="regNickname" placeholder="选填，默认同用户名">
+            </div>
+            <div class="form-item">
+                <label>注册码：</label>
+                <input type="text" id="regCode" placeholder="输入注册码">
+            </div>
+            <button onclick="register()">注册</button>
+        </div>
+        <!-- Token 展示区（登录或注册成功后自动填充） -->
+        <div class="form-item" style="margin-top:10px;">
             <label>Token：</label>
-            <input type="text" id="token" placeholder="登录后自动填充" readonly>
+            <input type="text" id="token" placeholder="登录/注册后自动填充" readonly>
         </div>
     </div>
 
@@ -135,14 +191,75 @@
         const time = new Date().toLocaleTimeString();
         const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
         logArea.innerHTML += `[${time}] <span class="${className}">${message}</span>\n`;
-        // 自动滚动到底部
         logArea.scrollTop = logArea.scrollHeight;
+    }
+
+    /**
+     * 切换登录/注册表单的显示
+     * @param {string} tab - 'login' 或 'register'
+     */
+    function switchTab(tab) {
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const tabLogin = document.getElementById('tabLogin');
+        const tabRegister = document.getElementById('tabRegister');
+
+        if (tab === 'login') {
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+            tabLogin.classList.add('active');
+            tabRegister.classList.remove('active');
+        } else {
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'block';
+            tabLogin.classList.remove('active');
+            tabRegister.classList.add('active');
+        }
+    }
+
+    /**
+     * 注册：调用 /register 接口，成功后自动填入 token
+     */
+    async function register() {
+        const username = document.getElementById('regUsername').value;
+        const password = document.getElementById('regPassword').value;
+        const nickname = document.getElementById('regNickname').value;
+        const registerCode = document.getElementById('regCode').value;
+
+        if (!username || !password || !registerCode) {
+            log('用户名、密码和注册码不能为空！', 'error');
+            return;
+        }
+
+        try {
+            log('开始注册...');
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password, nickname, registerCode })
+            });
+
+            const result = await response.json();
+            if (result.code === 200) {
+                const token = result.data;
+                document.getElementById('token').value = token;
+                log(`注册成功，Token：${token}`, 'success');
+                // 注册成功后切回登录页（token已就绪，可直接连WS）
+                switchTab('login');
+            } else {
+                log(`注册失败：${result.msg || '未知错误'}`, 'error');
+            }
+        } catch (error) {
+            log(`注册请求异常：${error.message}`, 'error');
+        }
     }
 
     // 1. 登录获取token（适配新的响应格式：code=200、data存token）
     async function login() {
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
+        const username = document.getElementById('loginUsername').value;
+        const password = document.getElementById('loginPassword').value;
 
         if (!username || !password) {
             log('用户名和密码不能为空！', 'error');

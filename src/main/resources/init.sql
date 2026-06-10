@@ -28,7 +28,7 @@ CREATE TABLE `user` (
   `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '密码',
   `point` float NOT NULL DEFAULT '0' COMMENT '用户积分',
   `create_time` datetime NOT NULL COMMENT '创建时间',
-  `test` tinyint(1) DEFAULT NULL,
+  `test` tinyint(1) DEFAULT 0 COMMENT '是否为测试账号 0:否 1:是',
   `nickname` varchar(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';

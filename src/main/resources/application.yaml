@@ -6,6 +6,10 @@ spring:
     active: dev
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
+# 业务自定义配置
+dpoker:
+  register-code: dpoker616   # 注册码，修改此处即可更换
+
 # MyBatisPlus 公共配置
 mybatis-plus:
   configuration:
