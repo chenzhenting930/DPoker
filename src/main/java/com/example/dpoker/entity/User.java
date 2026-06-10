@@ -20,4 +20,5 @@ public class User {
     private float point; // 用户积分
     private LocalDateTime createTime; // 创建时间
     private String nickname;
+    private Integer test; // 是否为测试账号 0:否 1:是
 }
