@@ -75,6 +75,9 @@ public class BettingEngine {
 
 
         room.setBettingOrder(buildNewBettingOrderAfterRaise(room, player));
+        // 实时重建底池，让前端奖池数字随加注即时更新
+        // （rebuildPots 基于 totalBetInHand，addToTotalBet 已更新该字段）
+        new PotManager().rebuildPots(room);
     }
 
     private List<Integer> buildNewBettingOrderAfterRaise(GameRoom room, Player player) {
@@ -103,6 +106,9 @@ public class BettingEngine {
         player.setBetThisRound(player.getBetThisRound() + toCall);
         player.addToTotalBet(toCall);
 //        room.setPot(room.getPot() + toCall);
+        // 实时重建底池，让前端奖池数字随跟注即时更新
+        // （rebuildPots 基于 totalBetInHand，addToTotalBet 已更新该字段）
+        new PotManager().rebuildPots(room);
     }
 
     private void handleCheck(Player player, int currentBet) {
