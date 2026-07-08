@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 注册控制器，处理用户账号注册请求。
@@ -26,6 +27,12 @@ public class RegisterController {
     /** 从配置文件读取注册码，修改配置文件即可更换 */
     @Value("${dpoker.register-code}")
     private String validRegisterCode;
+
+    /**
+     * 前端预设头像库大小（与 UserAvatar.vue 中 AVATAR_PRESETS 数组长度保持一致）。
+     * 注册时随机分配一个 preset:N，让新用户一开始就有专属头像，避免出现字母头像。
+     */
+    private static final int PRESET_AVATAR_COUNT = 12;
 
     @Autowired
     UserMapper userMapper;
@@ -75,6 +82,8 @@ public class RegisterController {
         newUser.setPoint(10000);          // 新用户赠送10000初始积分
         newUser.setCreateTime(LocalDateTime.now());
         newUser.setTest(0); // 非测试账号
+        // 随机分配一个预设头像，避免新用户出现字母头像
+        newUser.setAvatar("preset:" + ThreadLocalRandom.current().nextInt(PRESET_AVATAR_COUNT));
         userMapper.insert(newUser);
 
         log.info("新用户注册成功: username={}, userId={}", username, newUser.getId());

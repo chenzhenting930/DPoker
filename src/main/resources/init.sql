@@ -30,6 +30,7 @@ CREATE TABLE `user` (
   `create_time` datetime NOT NULL COMMENT '创建时间',
   `test` tinyint(1) DEFAULT 0 COMMENT '是否为测试账号 0:否 1:是',
   `nickname` varchar(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `avatar` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '头像标识 preset:N，NULL 时前端按昵称 hash 兜底',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -40,7 +41,7 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
-INSERT INTO `user` VALUES (1,'alice','123456',10000,'2025-03-10 14:30:00',1,'alice'),(2,'bob','password',10000,'2025-04-01 09:15:22',1,'bob'),(3,'charlie','qwerty123',10000,'2024-12-25 18:45:10',1,'charlie'),(4,'李四','lisi123',10000,'2026-01-18 10:00:00',1,'李四'),(5,'eve','letmein',10000,'2026-01-18 15:04:20',1,'eve'),(6,'ds','616',39610,'2026-01-22 20:43:51',0,'戴爷'),(7,'pyq','616',-70000,'2026-01-22 20:43:51',0,'东北王'),(8,'xg','616',55802,'2026-01-22 20:43:51',0,'叉寄'),(9,'zxy','616',20164,'2026-01-22 20:43:51',0,'周星星'),(10,'zy','616',24424,'2026-01-22 20:43:51',0,'综艺'),(11,'地味','616',10000,'2026-01-22 20:43:51',0,'地位'),(12,'bjz','616',-10000,'2026-01-22 20:43:51',0,'鲍jiezhi');
+INSERT INTO `user` VALUES (1,'alice','123456',10000,'2025-03-10 14:30:00',1,'alice','preset:0'),(2,'bob','password',10000,'2025-04-01 09:15:22',1,'bob','preset:1'),(3,'charlie','qwerty123',10000,'2024-12-25 18:45:10',1,'charlie','preset:2'),(4,'李四','lisi123',10000,'2026-01-18 10:00:00',1,'李四','preset:3'),(5,'eve','letmein',10000,'2026-01-18 15:04:20',1,'eve','preset:4'),(6,'ds','616',39610,'2026-01-22 20:43:51',0,'戴爷','preset:5'),(7,'pyq','616',-70000,'2026-01-22 20:43:51',0,'东北王','preset:6'),(8,'xg','616',55802,'2026-01-22 20:43:51',0,'叉寄','preset:7'),(9,'zxy','616',20164,'2026-01-22 20:43:51',0,'周星星','preset:8'),(10,'zy','616',24424,'2026-01-22 20:43:51',0,'综艺','preset:9'),(11,'地味','616',10000,'2026-01-22 20:43:51',0,'地位','preset:10'),(12,'bjz','616',-10000,'2026-01-22 20:43:51',0,'鲍jiezhi','preset:11');
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

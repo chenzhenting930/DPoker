@@ -27,6 +27,12 @@ public class Player {
     private int betThisRound = 0; // 本轮已投入底池的筹码
     private boolean AllIn = false;
     private int totalBetInHand = 0; // 整手牌累计投入底池的筹码
+    /**
+     * 头像标识（来自 User.avatar，加入房间时透传）。
+     * 格式 "preset:N"，由前端 UserAvatar 渲染为对应 emoji 头像。
+     * 跟随玩家在整个牌局内一致，所有客户端都能看到同一头像。
+     */
+    private String avatar;
 
     public void resetBetThisRound() {
         this.betThisRound = 0;
@@ -59,6 +65,7 @@ public class Player {
                 .point(point)
                 .chips(chips)
                 .ready(ready)
+                .avatar(avatar)
                 .build();
     }
 }

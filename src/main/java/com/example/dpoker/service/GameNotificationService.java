@@ -87,12 +87,16 @@ public class GameNotificationService {
         view.setNickname(player.getPlayerName()); // 透传昵称给前端
         view.setChips(player.getChips());
         view.setTotalBetInHand(player.getTotalBetInHand());
+        // 透传本轮下注额，前端据此计算跟注额 = currentBet - betThisRound
+        view.setBetThisRound(player.getBetThisRound());
         view.setFolded(player.isFolded());
         view.setAllIn(player.isAllIn());
         view.setCurrentPlayer(player.getUserId().equals(room.getCurrentPlayer().getUserId()));
         view.setIndex(index);
         int buttonIndex = room.getButtonIndex();
         view.setPosName(getPositionName(buttonIndex,index,room.getPlayers().size()));
+        // 透传头像标识，让前端 PlayerSeat 据此渲染对应 emoji 头像
+        view.setAvatar(player.getAvatar());
 
 
         if (p.getUserId().equals(player.getUserId())) {

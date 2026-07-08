@@ -105,6 +105,8 @@ public class GameService {
         Player player = new Player(actionRequest.getPlayerId(), 10000,actionRequest.getUserName());
         player.setPoint(user.getPoint());
         player.setReady(false);
+        // 透传头像标识到 Player，让房间内所有玩家看到同一头像
+        player.setAvatar(user.getAvatar());
         if (room.getPlayers().contains(player)){
             return Result.fail(2,"玩家已加入房间！",room.toGameRoomVO());
         } else if (room.isGameStarted()) {
@@ -130,6 +132,8 @@ public class GameService {
             Player player = new Player(actionRequest.getPlayerId(), 10000,actionRequest.getUserName());
             player.setPoint(user.getPoint());
             player.setReady(false);
+            // 透传头像标识到 Player，让房间内所有玩家看到同一头像
+            player.setAvatar(user.getAvatar());
 
             List<Player> playerList = new ArrayList<>();
             playerList.add(player);
@@ -160,7 +164,12 @@ public class GameService {
                 notificationService.notifyRoom(room);
             }
         } catch (Exception e) {
-            notificationService.notifyPlayer(playerId,e.getMessage());
+            // 错误消息通过房间频道发送（而非用户频道）：
+            // 之前用 notifyPlayer → /user/queue 发送，但前端 handleUserMessage 无法处理
+            // 没有 type/code 字段的消息（GameUpdateDto 被静默丢弃），导致错误消息永远不到。
+            // 现在改用 notifyAllInRoom → /topic/game/{roomId}，走已验证可靠的房间频道。
+            // data 字段放 playerId，前端只给目标玩家弹 error Toast，其他人只在聊天看到。
+            notificationService.notifyAllInRoom(room, Result.fail(500, e.getMessage(), playerId));
             log.error("Error handling event", e);
         }
     }
