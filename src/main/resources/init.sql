@@ -77,7 +77,7 @@ CREATE TABLE `season_rank` (
   `nickname` varchar(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '结算时昵称快照',
   `avatar` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '结算时头像快照',
   `final_point` float NOT NULL COMMENT '最终积分',
-  `rank` int NOT NULL COMMENT '名次 1,2,3...',
+  `rank` int NOT NULL COMMENT '名次 1,2,3...（MySQL 8.0 保留字，查询时需用反引号包裹）',
   PRIMARY KEY (`id`),
   KEY `idx_season_id` (`season_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='赛季排名快照表';

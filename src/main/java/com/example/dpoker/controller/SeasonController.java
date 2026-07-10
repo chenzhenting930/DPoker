@@ -30,14 +30,14 @@ import java.util.Map;
  * 三个接口（前端通过 Vite 代理 /api → 后端根路径，所以这里不带 /api 前缀）：
  *   1. POST /seasonSettle   赛季结算（仅用户 zy 有权限）
  *   2. GET  /seasonList      获取所有赛季列表（用于排行榜切换查看）
- *   3. GET  /seasonRank      获取某赛季排名（seasonId=0 表示当前赛季）
+ *   3. GET  /seasonRank      获取某赛季排名（传赛季ID，当前赛季查实时积分，历史赛季查快照）
  *
  * 结算逻辑：
  *   a. 快照当前所有真实玩家（test=0）按积分降序排名写入 season_rank
  *   b. 当前赛季 end_time=now, status='ended'
  *   c. 创建新赛季 season_number+1, status='active'
  *   d. 所有真实玩家积分重置为 10000
- *   全程 @Transactional 保证原子性，任意一步失败则整体回滚
+ * 全程 @Transactional 保证原子性，任意一步失败则整体回滚
  */
 @Slf4j
 @RestController
@@ -162,21 +162,25 @@ public class SeasonController {
     /**
      * 获取某赛季排名
      * ---------------------------------------------------------------------------
-     * @param seasonId 赛季ID；传 0 或不传表示当前赛季（直接查 user 表实时积分）
-     *                 传具体ID则查 season_rank 历史快照
+     * @param seasonId 赛季ID（season 表主键）
+     *                 若该赛季为当前活跃赛季，查 user 表实时积分
+     *                 若为已结束赛季，查 season_rank 历史快照
      */
     @GetMapping("/seasonRank")
     public Result seasonRank(
             @RequestHeader(value = "token", required = false) String token,
             @RequestParam(defaultValue = "0") Integer seasonId) {
-        // 注：路径不带 /api 前缀，因为 Vite 代理已 rewrite 去掉 /api
         Integer userId = LoginTokenManager.validateToken(token);
         if (userId == null) {
             return Result.fail(401, "登录已失效，请重新登录", null);
         }
 
-        // seasonId=0：当前赛季，直接查 user 表实时积分（与 getPointRank 逻辑一致）
-        if (seasonId == null || seasonId == 0) {
+        // 先查当前活跃赛季，用于判断请求的是否是当前赛季
+        Season activeSeason = seasonMapper.selectOne(
+                new QueryWrapper<Season>().eq("status", "active"));
+
+        // 当前活跃赛季：查 user 表实时积分（实时反映玩家当前分数）
+        if (activeSeason != null && activeSeason.getId().equals(seasonId)) {
             List<User> users = userMapper.selectList(
                     new QueryWrapper<User>()
                             .select("nickname", "point", "avatar")
@@ -186,10 +190,11 @@ public class SeasonController {
         }
 
         // 历史赛季：查 season_rank 快照
+        // 注意：rank 是 MySQL 8.0 保留字，orderByAsc 中必须用反引号包裹列名
         List<SeasonRank> ranks = seasonRankMapper.selectList(
                 new QueryWrapper<SeasonRank>()
                         .eq("season_id", seasonId)
-                        .orderByAsc("rank"));
+                        .orderByAsc("`rank`"));
         return Result.success("获取历史赛季排名成功", ranks);
     }
 }

@@ -21,7 +21,9 @@ public class LoginTokenManager {
     }
 
     // 验证token并获取用户名（WebSocket握手时调用）
+    // ConcurrentHashMap 不允许 null key，需前置判空避免 NPE
     public static Integer validateToken(String token) {
+        if (token == null || token.isEmpty()) return null;
         return TOKEN_MAP.get(token);
     }
 
