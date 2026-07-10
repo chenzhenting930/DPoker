@@ -44,14 +44,23 @@ public class GameService {
         }
         room.enqueue(new PlayerActionEvent(action));
         BizThreadPool.execute(()->processOneEvent(room,action.getPlayerId()));
-        if (action.getAction().equals("raise")){
+        /**
+         * 所有玩家操作（fold/call/check/raise/allin 等）统一返回 code=207，
+         * 前端通过 code 识别为"操作"类型消息，放入聊天框的"操作" tab 中。
+         * 之前只有非加注动作走 207，加注走 200，导致加注出现在"聊天" tab，
+         * 其他操作在"操作" tab，玩家无法在单一 tab 查看完整操作流水。
+         */
+        String actionText;
+        if ("raise".equals(action.getAction())) {
             Player player = room.getPlayerById(action.getPlayerId());
-            if (player.getChips() + player.getBetThisRound()<action.getAmount()){
-                action.setAmount(player.getChips()+ player.getBetThisRound());
+            if (player.getChips() + player.getBetThisRound() < action.getAmount()) {
+                action.setAmount(player.getChips() + player.getBetThisRound());
             }
-            return Result.success(action.getUserName()+"进行了"+action.getAction()+" 金额："+action.getAmount());
+            actionText = action.getUserName() + "进行了" + action.getAction() + " 金额：" + action.getAmount();
+        } else {
+            actionText = action.getUserName() + "进行了" + action.getAction();
         }
-        return Result.success(207,action.getUserName()+"进行了"+action.getAction());
+        return Result.success(207, actionText);
     }
 
     public Result startNewGame(Integer roomId,ActionRequest actionRequest) {
