@@ -87,7 +87,7 @@ public class GameService {
             player.setReady(true);
             if (room.isAllPlayersReady() && room.getPlayers().size()>=3){
                 gameEngine.startNewHand(room);
-                log.info("游戏开始！");
+                log.info("[房间{}] 游戏开始", roomId);
                 return Result.success("游戏开始！",room.toGameRoomVO());
             }
         }catch (Exception e){
@@ -125,7 +125,7 @@ public class GameService {
         //通知房间用户
         notificationService.notifyAllInRoom(room, "玩家"+actionRequest.getUserName()+"加入房间");
         notificationService.notifyAllInRoom(room, room.toGameRoomVO());
-        log.info("玩家"+actionRequest.getPlayerId()+"加入房间"+room.getRoomId());
+        log.info("[房间{}] 玩家 {}({}) 加入房间", roomId, actionRequest.getUserName(), actionRequest.getPlayerId());
         return Result.success("加入房间成功！",room.toGameRoomVO());
     }
 
@@ -149,7 +149,7 @@ public class GameService {
             GameRoom room = new GameRoom(roomId, playerList,actionRequest.getName());
             room.setBlinds(new Integer[]{actionRequest.getSmallBlind(), actionRequest.getBigBlind()});
             rooms.put(roomId,room);
-            log.info("房间"+roomId+"创建成功");
+            log.info("[房间{}] 创建成功，创建者：{}", roomId, actionRequest.getUserName());
             return Result.success("房间创建成功",room.toGameRoomVO());
         } catch (Exception e) {
             return Result.fail("房间创建失败！"+e.getMessage());
@@ -179,7 +179,7 @@ public class GameService {
             // 现在改用 notifyAllInRoom → /topic/game/{roomId}，走已验证可靠的房间频道。
             // data 字段放 playerId，前端只给目标玩家弹 error Toast，其他人只在聊天看到。
             notificationService.notifyAllInRoom(room, Result.fail(500, e.getMessage(), playerId));
-            log.error("Error handling event", e);
+            log.error("[房间{}] 处理事件异常", room.getRoomId(), e);
         }
     }
 
@@ -240,7 +240,7 @@ public class GameService {
         chips = chips - 10000;
         float point = point1 + chips;
         user.setPoint(point);
-        log.info("玩家"+user.getUsername()+"原积分："+point1+" 转换后："+point+",筹码-10000 = "+chips);
+        log.info("玩家 {} 积分结算：{} → {}", user.getUsername(), point1, point);
         return user;
     }
 

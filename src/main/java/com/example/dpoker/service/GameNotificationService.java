@@ -91,7 +91,8 @@ public class GameNotificationService {
         view.setBetThisRound(player.getBetThisRound());
         view.setFolded(player.isFolded());
         view.setAllIn(player.isAllIn());
-        view.setCurrentPlayer(player.getUserId().equals(room.getCurrentPlayer().getUserId()));
+        view.setCurrentPlayer(room.getCurrentPlayer() != null
+                && player.getUserId().equals(room.getCurrentPlayer().getUserId()));
         view.setIndex(index);
         int buttonIndex = room.getButtonIndex();
         view.setPosName(getPositionName(buttonIndex,index,room.getPlayers().size()));

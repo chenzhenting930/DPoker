@@ -33,7 +33,7 @@ public class GameReport {
                 gameReport.setChips(player.getChips());
                 gameReport.setTotalBetInHand(player.getTotalBetInHand());
                 Map<Player, Integer> winnerMap = room.getWinnerMap();
-                if (winnerMap.containsKey(player)){
+                if (winnerMap != null && winnerMap.containsKey(player)){
                     Integer amount = winnerMap.get(player);
                     gameReport.setWinChips(amount);
                     gameReport.setLoseChips(0);

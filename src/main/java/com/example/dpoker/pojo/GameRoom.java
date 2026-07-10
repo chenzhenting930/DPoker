@@ -25,7 +25,7 @@ public class GameRoom {
     private int pot;                        // 当前底池
     private int currentBet;                 // 当前轮次最高下注额
     private int round;                      // 0=preflop, 1=flop,2=turn,3=river,4=showdown
-    private boolean gameEnded = true;
+    private boolean gameEnded = false;
     private boolean gameStarted = false;
     private int buttonIndex;
     private int currentPlayerIndex = -1;        // 当前轮到谁行动（index）

@@ -31,8 +31,7 @@ public class GameController {
             @DestinationVariable Integer roomId,
             @Payload ActionRequest request)  {
 
-        System.out.println("roomId = " + roomId+ " request ="+request);
-
+        log.info("[房间{}] 玩家操作：{}(id={}) action={}", roomId, request.getUserName(), request.getPlayerId(), request.getAction());
         return gameService.onPlayerAction(roomId, request);
     }
 
@@ -43,7 +42,7 @@ public class GameController {
             @DestinationVariable Integer roomId,
             @Payload ActionRequest request) {
 
-        log.info(request.getUserName()+" is ready for game");
+        log.info("[房间{}] {} 准备就绪", roomId, request.getUserName());
         return gameService.startNewGame(roomId,request);
     }
 
@@ -86,6 +85,7 @@ public class GameController {
             @DestinationVariable Integer roomId,
             @Payload ActionRequest request) {
 
+        log.info("[房间{}] {} 加入房间", roomId, request.getUserName());
         return gameService.joinGameRoom(roomId,request);
     }
 
@@ -95,12 +95,14 @@ public class GameController {
             @DestinationVariable Integer roomId,
             @Payload ActionRequest request) {
 
+        log.info("创建房间：roomId={} 房间名={} 创建者={}", roomId, request.getName(), request.getUserName());
         return gameService.createGameRoom(roomId, request);
     }
 
     @MessageMapping("/getGameRoomList")
     @SendToUser("/queue")
     public Result getGameRoomList() {
+        log.info("获取房间列表");
         return gameService.getGameRoomList();
     }
 
@@ -126,6 +128,7 @@ public class GameController {
     public Result leaveGameRoom(
             @DestinationVariable Integer roomId,
             @Payload ActionRequest request){
+        log.info("[房间{}] {} 离开房间", roomId, request.getUserName());
         return gameService.leaveGameRoom(roomId,request);
     }
 

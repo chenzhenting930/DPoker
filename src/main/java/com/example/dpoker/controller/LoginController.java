@@ -33,12 +33,15 @@ public class LoginController {
         String password = loginRequest.getPassword();
         User user = userMapper.selectOne(new LambdaQueryWrapper<>(User.class).eq(User::getUsername, username));
         if (user == null){
+            log.info("登录失败：用户不存在 username={}", username);
             return Result.fail("用户不存在");
         }
         if (!user.getPassword().equals(password)){
+            log.info("登录失败：密码错误 username={}", username);
             return Result.fail("密码错误");
         }
         String token = LoginTokenManager.generateToken(user.getId());
+        log.info("用户登录成功：{}(id={})", username, user.getId());
         return Result.success(token);
     }
 
